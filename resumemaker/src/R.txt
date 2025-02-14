@@ -1,0 +1,5 @@
+ <div>
+            <h1>Easy Steps To Your Resume</h1>
+            <p>Unlock your career potential with our easy-to-use resume builder. Whether you're entering the job market or advancing your career, we help you craft a professional resume that stands out to employers.</p>
+            <button className='btn btn-primary'>Build Now</button>
+        </div>
