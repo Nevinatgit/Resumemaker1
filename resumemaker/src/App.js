@@ -34,6 +34,7 @@ function App() {
                     <Route path="/ResumeMaker" element={<ResumeMaker />} />
                     <Route path="/infogather" element={<Infogather />} />
                     <Route path="/ResumeEditer" element={<ResumeEditer />} />
+                    <Route path="/ResumeData" element={<Infogather />} />
                    
                     <Route path="/Blog" element={<BlogMain />} />
                     <Route path="/FAQ" element={<FAQ />} />

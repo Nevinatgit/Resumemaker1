@@ -1,0 +1,49 @@
+ useEffect(() => {
+    const queryParams1 = new URLSearchParams(location.search);
+    const editz = queryParams1.get('edit');
+    const fetchData = async () => {
+      const queryParams = new URLSearchParams(location.search);
+      const id = queryParams.get('id');
+      
+      console.log(id,token);
+      if (id && token) {
+        try {
+          console.log("sdfg");
+          const response = await axios.get(
+            'http://localhost:5000/api/resumeRoutes/GetResume',
+            {
+              params: { id }, // Sending 'id' as a query parameter
+              headers: {
+                'Authorization': `Bearer ${token}`, // Sending token in the Authorization header
+              },
+            }
+          );
+
+       
+       
+          console.log(response.data.existingResume);
+          setDisplay({
+            contact: true,
+            about: true,
+            Experience: true,
+            skills: true,
+            language: true,
+            hobbies: true,
+            references: true,
+            education: true,
+          });
+
+
+          console.log("wallah");
+
+        } catch (err) {
+          // Handle error here
+        }
+      }
+    };
+   
+    if(editz==="true"){
+     
+    fetchData(); // Call fetchData inside useEffect
+    }
+  }, [location.search, token]);

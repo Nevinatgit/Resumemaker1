@@ -14,15 +14,15 @@ const initialState = {
     bulletList: false,
     image: null,  // Image state to store the image URL
   },
-  resumeStateX: {
-    about: "",
-    Experience: ["", ""],
-    skills: ["", ""],
-    language: "",
-    hobbies: "",
-    references: "",
-    education: "",
-    
+  resumeStateX1: {
+    about: "", // Matches the 'about' field in formData
+    experience: [{ jobTitle: '', jobDescription: '' }], // Matches the 'experience' field in formData
+    skills: "", // Matches the 'skills' field in formData
+    softSkills: "", // Matches the 'softSkills' field in formData
+    education: [{ college: '', timeAttended: '' }], // Matches the 'education' field in formData
+    contact: {name:'',phone:'',email:''},
+    references: { refererName: '', refererDesignation: '', quote: '' }, // Matches the 'references' field in formData
+    image:null
   },
   history: [],
 };
@@ -38,7 +38,8 @@ const resumeEditorSlice = createSlice({
     },
     
     setresumeState: (state, action) => {
-      state.resumeStateX = { ...action.payload };
+      // Update the resumeStateX with the new payload (formData)
+      state.resumeStateX1 = { ...action.payload };
     },
     
     loadState: (state) => {

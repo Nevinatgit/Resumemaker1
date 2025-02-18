@@ -95,7 +95,7 @@ const ResumeEditorToolbar = () => {
 
   return (
     <div style={styles.toolbar}>
-      {/* Bold, Italic, Underline */}
+    
       <div className='mt-5' style={styles.buttonGroup}>
         <button style={styles.button} onClick={handleBoldToggle}>
           <FontAwesomeIcon icon={faBold} />
@@ -108,7 +108,7 @@ const ResumeEditorToolbar = () => {
         </button>
       </div>
 
-      {/* Font Size */}
+    
       <div style={styles.buttonGroup}>
         <label style={styles.label}>Font Size</label>
         <input

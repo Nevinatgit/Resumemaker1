@@ -81,7 +81,7 @@ export default function ResumeMaker() {
     
                 
       <Link 
-    to={`/ResumeEditer?id=${choice}&edit=false`}
+    to={`/ResumeData?id=${choice}&edit=false`}
     className={"btn btn-primary" } 
     style={{ textDecoration: "none", color: 'white' }}
     onClick={(e) => { if (!choice) e.preventDefault(); }}  // Prevent navigation if choice is falsy
@@ -90,7 +90,7 @@ export default function ResumeMaker() {
 </Link>
 <h2 className='text'>OR</h2>
     <Link 
-    to={`/ResumeEditer?id=${choice}&edit=true`}
+    to={`/ResumeData?id=${choice}&edit=true`}
     className={choice ? "btn btn-primary" : "btn btn-disabled"} 
     style={{ textDecoration: "none", color: 'white' }}
     onClick={(e) => { if (!choice) e.preventDefault(); }}  // Prevent navigation if choice is falsy
