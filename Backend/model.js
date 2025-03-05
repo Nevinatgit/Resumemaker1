@@ -35,31 +35,38 @@ UserSchema.methods.comparePassword = async function (password) {
 // Create User model
 const User = mongoose.model('User', UserSchema);
 
-// Resume Schema
 const resumeSchema = new mongoose.Schema({
-  username: { type: String, required: true, ref: 'User' }, // Reference to User
+  username: { 
+    type: String, 
+    required: true, 
+    ref: 'User' 
+  },
   resumeState: {
     about: { type: String, default: '' },
-    experience: { type: [String], default: [] },
-    skills: { type: [String], default: [] },
+    experience: [{
+      jobTitle: { type: String, required: true },
+      jobDescription: { type: String, required: true }
+    }],
+    skills: { type: [String], default: [] }, // Skills array
+    softSkills: { type: [String], default: [] }, // Soft skills as array
     language: { type: String, default: '' },
     hobbies: { type: String, default: '' },
-    references:  { type: [String], default: [] },
-    education:  { type: [String], default: [] },
-    image: { type: String, default: '' },
+    references: [{
+      refererName: { type: String, required: true },
+      refererDesignation: { type: String, required: true },
+      quote: { type: String, required: true }
+    }],
+    education: [{
+      college: { type: String, required: true },
+      timeAttended: { type: String, required: true }
+    }],
+    
   },
- // formatting: {
-  //  fontSize: { type: String, default: '16' },
-   // isBold: { type: Boolean, default: false },
-  //  isItalic: { type: Boolean, default: false },
-  //  isUnderlined: { type: Boolean, default: false },
- //   alignment: { type: String, default: 'left' },
-  //  textColor: { type: String, default: '#000000' },
-  //  highlightColor: { type: String, default: '#FFFF00' },
-  //  fontFamily: { type: String, default: 'Arial' },
-   // bulletList: { type: Boolean, default: false },
-  //  image: { type: String, default: null },
-//  },
+  resumetemplate: { 
+    type: Number,
+    required: true, 
+    ref: 'ResumeTemplate' 
+  }
 });
 
 // Create Resume model
@@ -71,5 +78,25 @@ const tokenSchema = new mongoose.Schema({
 })
 const Token = mongoose.model('Token', tokenSchema);
 
+const imageSchema = new mongoose.Schema({
+  username:{ 
+    type: String, 
+    required: true, 
+    
+  },
+  id:{ 
+    type: Number, 
+    required: true, 
+    
+  },
+  imageUrl: String,
+  uploadedAt: { type: Date, default: Date.now },
+});
+
+// Create a model based on the schema
+const Image = mongoose.model('Image', imageSchema);
+
+
+
 // Export models
-module.exports = { User, Resume,Token };
+module.exports = { User, Resume,Token,Image };
