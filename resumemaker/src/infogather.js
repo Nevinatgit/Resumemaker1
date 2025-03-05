@@ -1,47 +1,49 @@
-import React, { useState } from 'react';
-import { useDispatch } from 'react-redux'; // To dispatch actions to Redux
-import { setresumeState } from './reducer'; // Import the action
+import React, { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux'; 
+import { setresumeState } from './reducer'; 
 import DomHeader from './DomHeader';
 import Footer from './Footer';
 import { useNavigate } from 'react-router-dom';
-
-export default function Infogather() {
+import { useLocation } from 'react-router-dom';
+import axios from 'axios';
+export default function Infogather(prop) {
   const [formData, setFormData] = useState({
     about: '',
     experience: [{ jobTitle: '', jobDescription: '' }],
-    skills: '',
-    softSkills: '',
+    skills: [''],
+    softSkills: [''],
     education: [{ college: '', timeAttended: '' }],
-    references: { refererName: '', refererDesignation: '', quote: '' },
+    references: [{ refererName: '', refererDesignation: '', quote: '' }],
     contact: { name: '', phone: '', email: '' },
-    image: null,  // New property to store the image
+    image: null,
   });
-
+ 
   const [currentStep, setCurrentStep] = useState(0);
-  const [errorMessages, setErrorMessages] = useState([])
+  const [errorMessages, setErrorMessages] = useState([]);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+ 
+  const location = useLocation();
+ 
 
-  // Handle input change for different fields
   const handleChange = (e, field, index) => {
     const value = e.target.value;
 
-    if (field === "experience" || field === "education") {
+    if (field === 'experience' || field === 'education') {
       const updatedField = [...formData[field]];
       updatedField[index] = { ...updatedField[index], [e.target.name]: value };
       setFormData((prevState) => ({
         ...prevState,
         [field]: updatedField,
       }));
-    } else if (field === "references") {
+    } else if (field === 'references') {
+      const updatedReferences = [...formData.references];
+      updatedReferences[index] = { ...updatedReferences[index], [e.target.name]: value };
       setFormData((prevState) => ({
         ...prevState,
-        references: {
-          ...prevState.references,
-          [e.target.name]: value,
-        },
+        references: updatedReferences,
       }));
-    } else if (field === "contact") {
+    } else if (field === 'contact') {
       setFormData((prevState) => ({
         ...prevState,
         contact: {
@@ -49,15 +51,22 @@ export default function Infogather() {
           [e.target.name]: value,
         },
       }));
-    } else if (field === "image") {
+    } else if (field === 'image') {
       const file = e.target.files[0];
       if (file) {
-        const imageUrl = URL.createObjectURL(file);
+        const imageUrl = file;
         setFormData((prevState) => ({
           ...prevState,
           image: imageUrl,
         }));
       }
+    } else if (Array.isArray(formData[field])) {
+      const updatedField = [...formData[field]];
+      updatedField[index] = value;
+      setFormData((prevState) => ({
+        ...prevState,
+        [field]: updatedField,
+      }));
     } else {
       setFormData((prevState) => ({
         ...prevState,
@@ -65,28 +74,41 @@ export default function Infogather() {
       }));
     }
   };
+  const queryParams = new URLSearchParams(location.search);
+  const [idrec,setidrec]=useState(queryParams.get('id'))
+ 
+  const handleAddField = (field) => {
+    setFormData((prevState) => {
+      if (field === 'experience') {
+        return { ...prevState, experience: [...prevState.experience, { jobTitle: '', jobDescription: '' }] };
+      } else if (field === 'skills' || field === 'softSkills') {
+        return { ...prevState, [field]: [...prevState[field], ''] };
+      } else if (field === 'education') {
+        return { ...prevState, education: [...prevState.education, { college: '', timeAttended: '' }] };
+      } else if (field === 'references') {
+        return { ...prevState, references: [...prevState.references, { refererName: '', refererDesignation: '', quote: '' }] };
+      }
+      return prevState;
+    });
+  };
 
-  // Handle next button click
+  
   const handleNext = (field) => {
     const errors = [];
-    
-    // Validate required fields
-   
-      if (field === "experience" || field === "education") {
-        formData[field].forEach((item) => {
-          if (!item.jobTitle || !item.jobDescription) {
-            errors.push(`${field} is incomplete.`);
-          }
-        });
-      } else if (field === "contact" || field === "references") {
-        if (!formData[field].name || !formData[field].phone || !formData[field].email) {
+
+    if (field === 'experience') {
+      formData[field].forEach((item) => {
+        if (!item.jobTitle || !item.jobDescription) {
           errors.push(`${field} is incomplete.`);
         }
-      } else if (!formData[field]) {
-        errors.push(`${field} cannot be empty.`);
+      });
+    } else if (field === 'contact') {
+      if (!formData[field].name || !formData[field].phone || !formData[field].email) {
+        errors.push(`${field} is incomplete.`);
       }
-   
-    // Display error messages if any required fields are empty
+    } else if (!formData[field]) {
+      errors.push(`${field} cannot be empty.`);
+    }
     if (errors.length > 0) {
       setErrorMessages(errors);
     } else {
@@ -95,15 +117,39 @@ export default function Infogather() {
     }
   };
 
-  // Handle form submission
+  
   const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(setresumeState(formData)); // Save formData in resumeStateX
-    console.log("Form data submitted: ", formData);
-    navigate("/ResumeEditer");
+    dispatch(setresumeState(formData)); 
+    console.log('Form data submitted: ', formData);
+   
+    const queryParams = new URLSearchParams(location.search);
+    navigate(`/ResumeEditer?id=${ queryParams.get('id')}`);
   };
+  
+  useEffect(()=>{
+    if (idrec === "about") {
+      setCurrentStep(0);
+    } else if (idrec === "experience") {
+        setCurrentStep(1);
+    } else if (idrec === "education") {
+        setCurrentStep(2);
+    } else if (idrec === "skill") {
+        setCurrentStep(4);
+    } else if (idrec === "softskill") {
+        setCurrentStep(3);
+    } else if (idrec === "contact") {
+        setCurrentStep(7);
+    } else if (idrec === "references") {
+        setCurrentStep(6);
+    } else {
+      
+        setCurrentStep(0); 
+    }
+  
+  },[])
 
-  // Render specific field content
+ 
   const renderFormField = (field, index) => {
     let content = null;
 
@@ -147,6 +193,9 @@ export default function Infogather() {
                 />
               </div>
             ))}
+            <button type="button" onClick={() => handleAddField('experience')} style={buttonStyle}>
+              Add More Experience
+            </button>
           </div>
         );
         break;
@@ -156,20 +205,19 @@ export default function Infogather() {
           <div style={formSectionStyle}>
             <h3 style={sectionTitleStyle}>Skills</h3>
             <label style={labelStyle}>Choose your skills:</label>
-            <select
-              value={formData.skills}
-              onChange={(e) => handleChange(e, 'skills')}
-              style={selectStyle}
-            >
-              <option value="">Select Skill</option>
-              <option value="React">React</option>
-              <option value="Java">Java</option>
-              <option value="Excel">Excel</option>
-              <option value="medical-coding-billing">Medical coding and billing</option>
-              <option value="nursing-procedures">Nursing procedures</option>
-              <option value="lab-testing-analysis">Lab testing and analysis</option>
-              <option value="phlebotomy">Phlebotomy (blood collection)</option>
-            </select>
+            {formData.skills.map((skill, idx) => (
+              <div key={idx}>
+                <input
+                  type="text"
+                  value={skill}
+                  onChange={(e) => handleChange(e, 'skills', idx)}
+                  style={inputStyle}
+                />
+              </div>
+            ))}
+            <button type="button" onClick={() => handleAddField('skills')} style={buttonStyle}>
+              Add More Skills
+            </button>
           </div>
         );
         break;
@@ -179,18 +227,19 @@ export default function Infogather() {
           <div style={formSectionStyle}>
             <h3 style={sectionTitleStyle}>Soft Skills</h3>
             <label style={labelStyle}>Choose your soft skills:</label>
-            <select
-              value={formData.softSkills}
-              onChange={(e) => handleChange(e, 'softSkills')}
-              style={selectStyle}
-            >
-              <option value="">Select Soft Skill</option>
-              <option value="Communication">Communication</option>
-              <option value="Teamwork">Teamwork</option>
-              <option value="Leadership">Leadership</option>
-              <option value="Problem Solving">Problem Solving</option>
-              <option value="Adaptability">Adaptability</option>
-            </select>
+            {formData.softSkills.map((softSkill, idx) => (
+              <div key={idx}>
+                <input
+                  type="text"
+                  value={softSkill}
+                  onChange={(e) => handleChange(e, 'softSkills', idx)}
+                  style={inputStyle}
+                />
+              </div>
+            ))}
+            <button type="button" onClick={() => handleAddField('softSkills')} style={buttonStyle}>
+              Add More Soft Skills
+            </button>
           </div>
         );
         break;
@@ -219,70 +268,78 @@ export default function Infogather() {
                 />
               </div>
             ))}
+            <button type="button" onClick={() => handleAddField('education')} style={buttonStyle}>
+              Add More Education
+            </button>
           </div>
         );
         break;
-
-      case 'contact':
-        content = (
-          <div style={formSectionStyle}>
-            <h3 style={sectionTitleStyle}>Contact Information</h3>
-            <label style={labelStyle}>Name</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.contact.name}
-              onChange={(e) => handleChange(e, 'contact')}
-              style={inputStyle}
-            />
-            <label style={labelStyle}>Phone</label>
-            <input
-              type="text"
-              name="phone"
-              value={formData.contact.phone}
-              onChange={(e) => handleChange(e, 'contact')}
-              style={inputStyle}
-            />
-            <label style={labelStyle}>Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.contact.email}
-              onChange={(e) => handleChange(e, 'contact')}
-              style={inputStyle}
-            />
-          </div>
-        );
-        break;
-
+        case 'contact':
+          content = (
+            <div style={formSectionStyle}>
+              <h3 style={sectionTitleStyle}>Contact Information</h3>
+              <label style={labelStyle}>Name</label>
+              <input
+                type="text"
+                name="name"
+                value={formData.contact.name}
+                onChange={(e) => handleChange(e, 'contact')}
+                style={inputStyle}
+              />
+              <label style={labelStyle}>Phone Number</label>
+              <input
+                type="text"
+                name="phone"
+                value={formData.contact.phone}
+                onChange={(e) => handleChange(e, 'contact')}
+                style={inputStyle}
+              />
+              <label style={labelStyle}>Email Address</label>
+              <input
+                type="email"
+                name="email"
+                value={formData.contact.email}
+                onChange={(e) => handleChange(e, 'contact')}
+                style={inputStyle}
+              />
+            </div>
+          );
+          break;
       case 'references':
         content = (
           <div style={formSectionStyle}>
             <h3 style={sectionTitleStyle}>References</h3>
-            <label style={labelStyle}>Name of the referrer</label>
-            <input
-              type="text"
-              name="refererName"
-              value={formData.references.refererName}
-              onChange={(e) => handleChange(e, 'references')}
-              style={inputStyle}
-            />
-            <label style={labelStyle}>Designation of the referrer</label>
-            <input
-              type="text"
-              name="refererDesignation"
-              value={formData.references.refererDesignation}
-              onChange={(e) => handleChange(e, 'references')}
-              style={inputStyle}
-            />
-            <label style={labelStyle}>Enter the quote</label>
-            <textarea
-              name="quote"
-              value={formData.references.quote}
-              onChange={(e) => handleChange(e, 'references')}
-              style={textareaStyle}
-              rows="4"
-            />
+            {formData.references.map((ref, idx) => (
+              <div key={idx}>
+                <label style={labelStyle}>Name of the Referrer</label>
+                <input
+                  type="text"
+                  name="refererName"
+                  value={ref.refererName}
+                  onChange={(e) => handleChange(e, 'references', idx)}
+                  style={inputStyle}
+                />
+                <label style={labelStyle}>Designation of the Referrer</label>
+                <input
+                  type="text"
+                  name="refererDesignation"
+                  value={ref.refererDesignation}
+                  onChange={(e) => handleChange(e, 'references', idx)}
+                  style={inputStyle}
+                />
+                <label style={labelStyle}>Enter the Quote</label>
+                <textarea
+                  name="quote"
+                  value={ref.quote}
+                  onChange={(e) => handleChange(e, 'references', idx)}
+                  style={textareaStyle}
+                  rows="4"
+                />
+              </div>
+            ))}
+            <button type="button" onClick={() => handleAddField('references')} style={buttonStyle}>
+              Add More References
+            </button>
           </div>
         );
         break;
@@ -318,13 +375,10 @@ export default function Infogather() {
     return content;
   };
 
-  // Handle next button click
-
-
-  // Form fields order
+  
   const formFields = ['about', 'experience', 'skills', 'softSkills', 'education', 'references', 'contact', 'image'];
 
-  // Determine if the current section is the last
+  
   const isLastStep = currentStep === formFields.length - 1;
 
   return (
@@ -333,53 +387,61 @@ export default function Infogather() {
       <div style={{ width: '100%', background: '#FFFFE0' }}>
         <h2>Please fill in the following fields</h2>
       </div>
+     
       <br />
       {errorMessages.length > 0 && (
-          <div className="alert alert-danger">
-            <ul>
-              {errorMessages.map((msg, index) => (
-                <li key={index}>{msg}</li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <div className="alert alert-danger">
+          <ul>
+            {errorMessages.map((msg, index) => (
+              <li key={index}>{msg}</li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div style={containerStyle1}>
-      {/* The progress bar width is incremented by 10% with each increase of the variable */}
-      <div style={{ ...barStyle, width: `${currentStep * 10}%` }} />
-      <p style={labelStyle1}>{currentStep * 10}%</p>
-      <br/>
-      <h3>You are almost there ...</h3>
-      
-    </div>
-    <br/>
-    <br/>
+    
+        <div style={{ ...barStyle, width: `${currentStep * 10}%` }} />
+        <p style={labelStyle1}>{currentStep * 10}%</p>
+        <br />
+        <h3>You are almost there ...</h3>
+      </div>
+      <br />
+      <br />
+     
       <form onSubmit={handleSubmit} style={formContentStyle}>
         {renderFormField(formFields[currentStep])}
         <div className="form-buttons">
-        {currentStep < formFields.length - 1 && (
-          <button
-            type="button"
-            onClick={()=>handleNext(formFields[currentStep])}
-            style={buttonStyle}
-            className="btn btn-primary"
-          >
-            Next
-          </button>
-        )}
-        {currentStep === formFields.length - 1 && (
+          {currentStep < formFields.length - 1 && idrec !== "about" && (
+            <button
+              type="button"
+              onClick={() => handleNext(formFields[currentStep])}
+              style={buttonStyle}
+              className="btn btn-primary"
+            >
+              Next
+            </button>
+          )}
+
+        {(currentStep === formFields.length - 1 || idrec === "about" || idrec === "experience" || idrec === "skills" || idrec === "softSkills" || idrec === "education" || idrec === "contact" || idrec === "references") && (
           <button type="submit" style={buttonStyle} className="btn btn-success">
             Submit
           </button>
         )}
-      </div>
+
+        </div>
+
       </form>
-      <br/>
-      <br/>
-      <br/>
+
+       
+      <br />
+      <br />
+      <br />
       <Footer />
     </div>
   );
 }
+
+
 const containerStyle1 = {
   width: '100%',
   backgroundColor: '#e0e0e0',
@@ -393,7 +455,7 @@ const barStyle = {
   height: '100%',
   backgroundColor: '#76c7c0',
   borderRadius: '10px',
-  transition: 'width 0.2s ease', // Smooth transition for the progress bar
+  transition: 'width 0.2s ease', 
 };
 
 const labelStyle1 = {
@@ -413,8 +475,9 @@ const buttonStyle1 = {
   border: 'none',
   cursor: 'pointer',
   borderRadius: '4px',
-  marginTop: '20px',
+  marginTop: '10px',
 };
+
 const containerStyle = {
   display: 'flex',
   flexDirection: 'column',
@@ -478,15 +541,4 @@ const buttonStyle = {
   cursor: 'pointer',
   borderRadius: '4px',
   marginTop: '10px',
-};
-
-const submitButtonStyle = {
-  padding: '12px 24px',
-  fontSize: '18px',
-  backgroundColor: '#007BFF',
-  color: '#fff',
-  border: 'none',
-  cursor: 'pointer',
-  borderRadius: '4px',
-  marginTop: '20px',
 };

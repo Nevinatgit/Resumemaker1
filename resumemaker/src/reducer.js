@@ -1,28 +1,41 @@
 import { createSlice } from '@reduxjs/toolkit';
 
+// Default editor state to avoid repetition
+const defaultEditorState = {
+  fontSize: "16",
+  isBold: true,
+  isItalic: false,
+  isUnderlined: false,
+  alignment: 'left',
+  textColor: '#000000',
+  highlightColor: '#FFFF00',
+  fontFamily: 'Arial',
+  bulletList: false,
+  image: null, 
+};
+
 const initialState = {
-  Token: "", // Store JWT token
+  Token: null, 
+  selectedAttribute:"about",
   editorState: {
-    fontSize: "16",
-    isBold: true,
-    isItalic: false,
-    isUnderlined: false,
-    alignment: 'left',
-    textColor: '#000000',
-    highlightColor: '#FFFF00',
-    fontFamily: 'Arial',
-    bulletList: false,
-    image: null,  // Image state to store the image URL
+    about: { ...defaultEditorState },
+    experience: { ...defaultEditorState },
+    skills: { ...defaultEditorState },
+    softSkills: { ...defaultEditorState },
+    education: { ...defaultEditorState },
+    contact: { ...defaultEditorState },
+    references: { ...defaultEditorState },
+    image: null, // Global image
   },
   resumeStateX1: {
-    about: "", // Matches the 'about' field in formData
+    about: '', // Matches the 'about' field in formData
     experience: [{ jobTitle: '', jobDescription: '' }], // Matches the 'experience' field in formData
-    skills: "", // Matches the 'skills' field in formData
-    softSkills: "", // Matches the 'softSkills' field in formData
+    skills: [''], // Change from string to an array like formData
+    softSkills: [''], // Change from string to an array like formData
     education: [{ college: '', timeAttended: '' }], // Matches the 'education' field in formData
-    contact: {name:'',phone:'',email:''},
-    references: { refererName: '', refererDesignation: '', quote: '' }, // Matches the 'references' field in formData
-    image:null
+    contact: { name: '', phone: '', email: '' }, // Matches the 'contact' field in formData
+    references: [{ refererName: '', refererDesignation: '', quote: '' }], // Change from object to array like formData
+    image: null, // Matches the 'image' field in formData
   },
   history: [],
 };
@@ -64,11 +77,20 @@ const resumeEditorSlice = createSlice({
     setImage: (state, action) => {
       state.editorState.image = action.payload; // Update the image state with the base64 URL
     },
+
+    // Set editorState for individual sections like 'about', 'experience', etc.
+    setSectionEditorState: (state, action) => {
+      const { section, newEditorState } = action.payload;
+      if (state.editorState[section]) {
+        state.editorState[section] = { ...newEditorState };
+        
+      }
+    },
   },
 });
 
 // Export actions
-export const { saveState, loadState, setresumeState, setToken, clearToken, setImage } = resumeEditorSlice.actions;
+export const { saveState, loadState, setresumeState, setToken, clearToken, setImage, setSectionEditorState } = resumeEditorSlice.actions;
 
 // Export the reducer
 export default resumeEditorSlice.reducer;

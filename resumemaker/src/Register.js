@@ -44,11 +44,12 @@ export default function AuthForm() {
         dispatch(setToken(response.data.token)); // Save JWT token in Redux
         console.log("JWT Token saved:", response.data.token);
       }
-  
+      const username=formData.username
+      const queryParams = new URLSearchParams( {username }).toString();
       // Handle success
       console.log(response.data.message);  // Show the success message
       if(!isRegister && response.data.success){
-        navigate('/register')
+        navigate(`/register?${queryParams}`);
       }
        
      

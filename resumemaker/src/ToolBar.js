@@ -1,85 +1,111 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useSelector, useDispatch } from 'react-redux';
 import { faBold, faItalic, faUnderline, faAlignLeft, faAlignCenter, faAlignRight, faSave, faUndo, faRedo, faListUl, faImage } from '@fortawesome/free-solid-svg-icons';
-import { saveState, loadState } from './reducer';  // Import the Redux actions
+import { saveState, loadState,setSectionEditorState } from './reducer';  // Import the Redux actions
 import axios from 'axios';
 import { setImage } from './reducer'
+import { jsPDF } from "jspdf";
 
-const ResumeEditorToolbar = () => {
+const ResumeEditorToolbar = (prop) => {
   const dispatch = useDispatch();
+  const { editorState, history,resumeStateX1 } = useSelector(state => state.resumeEditor);
+  const Token = useSelector(state => state.resumeEditor.Token);
+  //console.log(resumeStateX1)
+  //console.log(editorState)
 
-  // Get the current editorState and history from Redux store
-  const { editorState, history,resumeStateX,Token } = useSelector(state => state.resumeEditor);
-  console.log(resumeStateX)
-  // Save the current state to history and set it as the new state
   const saveCurrentState = async () => {
+    console.log("logger")
+    handleImageUpload()
     dispatch(saveState(editorState)); 
     try {
       let token=Token
-
+      console.log(token,"AAAAAAAAAAAAAAAA")
       const response = await axios.post(
         'http://localhost:5000/api/resumeRoutes/saveResume',
-        { resumeState: resumeStateX },  // JSON payload
+        { resumeState: resumeStateX1,resumetemplate:prop.id }, 
         {
           headers: {
             Authorization: `Bearer ${token}`,  // Attach token
           },
         }
       );
-      // Handle the response, e.g., log success or update the state
+     
       console.log('Success:', response.data);
-    
-      // You can perform additional actions based on the successful response
-      // For example, update some state, show a success message, etc.
-    
     } catch (error) {
-      // Handle errors that might occur during the request
       console.error('Error during the API request:', error);
-    
-
     }
     
   
   };
-
+ 
   const undo = () => {
     if (history.length > 0) {
       const previousState = history[history.length - 1];
-      dispatch(loadState(previousState));  // Load the previous state from history
+      dispatch(loadState(previousState));  
     }
   };
 
   const redo = () => {
-    // Implement redo functionality if necessary (you can store a redo history stack)
+   
+  };
+  const [selectedAttribute, setSelectedAttribute] = useState('about');
+  const handleStateChange = (updates) => {
+   
+    dispatch(setSectionEditorState({
+      section:selectedAttribute ,
+      newEditorState: {
+        ...editorState[selectedAttribute],  
+        ...updates,     
+      }
+    }));
+   
   };
 
-  const handleStateChange = (newState) => {
-    // Merge the existing state with the updated property and dispatch to Redux
-    dispatch(saveState({ ...editorState, ...newState }));
-  };
-
-  const handleBoldToggle = () => handleStateChange({ isBold: !editorState.isBold });
-  const handleItalicToggle = () => handleStateChange({ isItalic: !editorState.isItalic });
-  const handleUnderlineToggle = () => handleStateChange({ isUnderlined: !editorState.isUnderlined });
+  const handleBoldToggle = () => handleStateChange({ isBold: !editorState[selectedAttribute].isBold });
+  const handleItalicToggle = () => handleStateChange({ isItalic: !editorState[selectedAttribute].isItalic });
+  const handleUnderlineToggle = () => handleStateChange({ isUnderlined: !editorState[selectedAttribute].isUnderlined });
   const handleFontSizeChange = (e) => handleStateChange({ fontSize: e.target.value });
   const handleAlignmentChange = (align) => handleStateChange({ alignment: align });
   const handleTextColorChange = (e) => handleStateChange({ textColor: e.target.value });
   const handleHighlightColorChange = (e) => handleStateChange({ highlightColor: e.target.value });
   const handleFontFamilyChange = (e) => handleStateChange({ fontFamily: e.target.value });
   const toggleBulletList = () => handleStateChange({ bulletList: !editorState.bulletList });
-
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        // Dispatch the action to set the image URL in Redux state
-        dispatch(setImage(reader.result)); 
+  
+    const [selectedImage, setSelectedImage] = useState(null);
+    const [imageUrl, setImageUrl] = useState('');
+      const handleImageChange = (e) => {
+        console.log(resumeStateX1.image)
+        setSelectedImage(resumeStateX1.image);
       };
-      reader.readAsDataURL(file);
-    }
-  };
+    const handleImageUpload = async (e) => {
+       await handleImageChange()
+        if (!selectedImage) {
+          alert('Please select an image to upload');
+          return;
+        }
+        console.log(Token,"dfgdfgdfgdfg")
+        const formData = new FormData();
+        formData.append('image', selectedImage);
+        formData.append('Token',Token)
+        formData.append('Id',5)
+        try {
+          const response = await axios.post('http://localhost:5000/api/resumeRoutes/upload', formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          });
+    
+          setImageUrl(response.data.imageUrl); 
+         
+          alert('Image uploaded and saved to MongoDB!');
+        } catch (error) {
+          console.error('Error uploading image:', error);
+        }
+      };
+  
+  
+  
   
   const clearFormatting = () => {
     handleStateChange({
@@ -92,10 +118,104 @@ const ResumeEditorToolbar = () => {
       fontFamily: 'Arial',
     });
   };
+  const fields = [
+    'about',
+    'experience',
+    'skills',
+    'softSkills',
+    'education',
+    'contact',
+    'references',
+    'image'
+  ];
 
+ 
+  const handleSelect = (e) => {
+    setSelectedAttribute(e.target.value);
+    
+   
+    
+  };
+  const handlePrint = () => {
+    const content = document.getElementById("Resume");
+  
+    if (content) {
+     
+      const wrapper = document.createElement('div');
+      wrapper.style.border = '2px solid black';  
+      wrapper.style.display = 'inline-block';  // Ensure wrapper fits content width
+      wrapper.style.margin = '0';
+      
+      // Get the exact width and height of the content
+      const contentRect = content.getBoundingClientRect();
+      wrapper.style.width = `${contentRect.width}px`;  // Adjust width to match content
+      wrapper.style.height = `${contentRect.height}px`; // Adjust height to match content
+  
+      // Clone the content and append it to the wrapper
+      wrapper.appendChild(content.cloneNode(true));
+  
+      // Temporarily attach the wrapper to the body to ensure html2canvas captures it
+      document.body.appendChild(wrapper);
+  
+      // Create the PDF document
+      const doc = new jsPDF();
+  
+      // Set the scale factor to fit the content within the page dimensions
+      const scale = Math.min(
+        .25,  // Scale to fit within page width (595px = A4 width)
+       0.22  // Scale to fit within page height (842px = A4 height)
+      );
+  
+      doc.html(wrapper, {
+        callback: (doc) => {
+          doc.save("Resume.pdf");
+        },
+        x: 0,  // Starting position
+        y: 0,
+        html2canvas: {
+          scale: scale,  // Scale the content proportionally
+          useCORS: true, // Enable cross-origin resource sharing for external resources
+        },
+      });
+  
+      // Remove the temporary wrapper after printing
+      document.body.removeChild(wrapper);
+    } else {
+      console.log("No content to print.");
+    }
+  };
+  
+  
+  
+  
   return (
     <div style={styles.toolbar}>
-    
+        <div className="container mt-5">
+      {/* Bootstrap Dropdown for selecting an attribute */}
+      <div className="dropdown">
+      
+        <button className="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+          Select an attribute
+        </button>
+        <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton">
+          {/* Loop over the fields array to create dropdown items */}
+          {fields.map((field) => (
+            <li key={field}>
+              <button className="dropdown-item" type="button" onClick={() => setSelectedAttribute(field)}>
+                {field}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Display the selected attribute */}
+      <div className="mt-4">
+        <h5>Selected Attribute: {selectedAttribute}</h5>
+        {/* Show a placeholder or value related to the selected attribute */}
+        {selectedAttribute && <p>This is where the data for {selectedAttribute} will go.</p>}
+      </div>
+    </div>
       <div className='mt-5' style={styles.buttonGroup}>
         <button style={styles.button} onClick={handleBoldToggle}>
           <FontAwesomeIcon icon={faBold} />
@@ -156,7 +276,7 @@ const ResumeEditorToolbar = () => {
           style={styles.colorInput}
         />
       </div>
-      <div style={styles.buttonGroup}>
+      {/*<div style={styles.buttonGroup}>
         <label style={styles.label}>Highlight Color</label>
         <input
           type="color"
@@ -164,7 +284,7 @@ const ResumeEditorToolbar = () => {
           onChange={handleHighlightColorChange}
           style={styles.colorInput}
         />
-      </div>
+      </div>*/}
 
       {/* Undo and Redo */}
       <div style={styles.buttonGroup}>
@@ -181,8 +301,8 @@ const ResumeEditorToolbar = () => {
         <button style={styles.button} onClick={toggleBulletList}>
           <FontAwesomeIcon icon={faListUl} />
         </button>
-        <input type="file" onChange={handleImageUpload} style={styles.fileInput} />
-        {editorState.image && <img src={editorState.image} alt="Uploaded" style={styles.imagePreview} />}
+       {/* <input type="file" onChange={handleImageUpload} style={styles.fileInput} />
+        {editorState.image && <img src={editorState.image} alt="Uploaded" style={styles.imagePreview} />}*/}
       </div>
 
       {/* Clear Formatting */}
@@ -198,6 +318,7 @@ const ResumeEditorToolbar = () => {
           <FontAwesomeIcon icon={faSave} />
         </button>
       </div>
+      <button className='btn btn-primary' onClick={handlePrint}>Print resume</button>
     </div>
   );
 };

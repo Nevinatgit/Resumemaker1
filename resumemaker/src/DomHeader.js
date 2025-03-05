@@ -17,6 +17,10 @@ export default function DomHeader() {
          to="/FAQ" >
             FAQ
         </Link>
+        <Link style={{textDecoration:"none"}}
+         to="/" >
+            Logout
+        </Link>
     </div>
   )
 }

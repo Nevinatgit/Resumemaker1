@@ -84,19 +84,11 @@ export default function ResumeMaker() {
     to={`/ResumeData?id=${choice}&edit=false`}
     className={"btn btn-primary" } 
     style={{ textDecoration: "none", color: 'white' }}
-    onClick={(e) => { if (!choice) e.preventDefault(); }}  // Prevent navigation if choice is falsy
+    onClick={(e) => { if (!choice) e.preventDefault(); }}  
 >
     Continue Resume
 </Link>
-<h2 className='text'>OR</h2>
-    <Link 
-    to={`/ResumeData?id=${choice}&edit=true`}
-    className={choice ? "btn btn-primary" : "btn btn-disabled"} 
-    style={{ textDecoration: "none", color: 'white' }}
-    onClick={(e) => { if (!choice) e.preventDefault(); }}  // Prevent navigation if choice is falsy
->
-    Choose editing Existing Template
-</Link>
+
                 <Link to="/Dashboard" className='btn btn-danger' style={{ textDecoration: "none", color: 'white' }}>Cancel</Link>
             </div>
         </div>
